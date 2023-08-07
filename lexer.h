@@ -10,42 +10,42 @@
 namespace parse {
 
     namespace token_type {
-        struct Number {  // Лексема «число»
-            int value;   // число
+        struct Number {  
+            int value;   
         };
 
-        struct Id {             // Лексема «идентификатор»
-            std::string value;  // Имя идентификатора
+        struct Id {             
+            std::string value;  // Id name
         };
 
-        struct Char {    // Лексема «символ»
-            char value;  // код символа
+        struct Char {    
+            char value;  
         };
 
-        struct String {  // Лексема «строковая константа»
+        struct String { 
             std::string value;
         };
 
-        struct Class {};    // Лексема «class» +
-        struct Return {};   // Лексема «return» +
-        struct If {};       // Лексема «if» +
-        struct Else {};     // Лексема «else» +
-        struct Def {};      // Лексема «def» +
-        struct Newline {};  // Лексема «конец строки» +
-        struct Print {};    // Лексема «print» +
-        struct Indent {};  // Лексема «увеличение отступа», соответствует двум пробелам +
-        struct Dedent {};  // Лексема «уменьшение отступа» +
-        struct Eof {};     // Лексема «конец файла» +
-        struct And {};     // Лексема «and» +
-        struct Or {};      // Лексема «or» +
-        struct Not {};     // Лексема «not» +
-        struct Eq {};      // Лексема «==» +
-        struct NotEq {};   // Лексема «!=» +
-        struct LessOrEq {};     // Лексема «<=» +
-        struct GreaterOrEq {};  // Лексема «>=» +
-        struct None {};         // Лексема «None» +
-        struct True {};         // Лексема «True» +
-        struct False {};        // Лексема «False» +
+        struct Class {};    
+        struct Return {};   
+        struct If {};       
+        struct Else {};     
+        struct Def {};      
+        struct Newline {};  
+        struct Print {};    
+        struct Indent {};  
+        struct Dedent {};  
+        struct Eof {};     
+        struct And {};  
+        struct Or {};      
+        struct Not {};     
+        struct Eq {};      
+        struct NotEq {};   
+        struct LessOrEq {};     
+        struct GreaterOrEq {}; 
+        struct None {};         
+        struct True {};         
+        struct False {};        
     }  // namespace token_type
 
     using TokenBase
@@ -89,14 +89,14 @@ namespace parse {
     public:
         explicit Lexer(std::istream& input);
 
-        // Возвращает ссылку на текущий токен или token_type::Eof, если поток токенов закончился
+		// return ref to current token or token_type::Eof if flow of tokens ends
         [[nodiscard]] const Token& CurrentToken() const;
 
-        // Возвращает следующий токен, либо token_type::Eof, если поток токенов закончился
+        // return ref to next token or token_type::Eof if flow of tokens ends
         Token NextToken();
 
-        // Если текущий токен имеет тип T, метод возвращает ссылку на него.
-        // В противном случае метод выбрасывает исключение LexerError
+		// if type of current token is T, method return ref to iter_swap
+		// else method throws exceptiom LexerError
         template <typename T>
         const T& Expect() const {
             using namespace std::literals;
@@ -108,8 +108,8 @@ namespace parse {
             throw LexerError("Not implemented"s);
         }
 
-        // Метод проверяет, что текущий токен имеет тип T, а сам токен содержит значение value.
-        // В противном случае метод выбрасывает исключение LexerError
+		// method checks that type of current token is T, and this token contains value
+		// else methor throws exception LexerError
         template <typename T, typename U>
         void Expect(const U& value) const {
             using namespace std::literals;
@@ -123,16 +123,16 @@ namespace parse {
             throw LexerError("Not implemented"s);
         }
 
-        // Если следующий токен имеет тип T, метод возвращает ссылку на него.
-        // В противном случае метод выбрасывает исключение LexerError
+        // if type of next token is T, method return ref to iter_swap
+		// else method throws exceptiom LexerError
         template <typename T>
         const T& ExpectNext() {
             NextToken();
             return Expect<T>();
         }
 
-        // Метод проверяет, что следующий токен имеет тип T, а сам токен содержит значение value.
-        // В противном случае метод выбрасывает исключение LexerError
+        // method checks that type of next token is T, and this token contains value
+		// else methor throws exception LexerError
         template <typename T, typename U>
         void ExpectNext(const U& value) {
             NextToken();
@@ -150,8 +150,6 @@ namespace parse {
         Token ReadIdentifier();
         Token ReadComparison();
         void ReadSpaces();
-
-        // Реализуйте приватную часть самостоятельно
     };
 
 }  // namespace parse

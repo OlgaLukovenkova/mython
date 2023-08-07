@@ -46,7 +46,6 @@ namespace parse {
 
             ASSERT_EQUAL(lexer.CurrentToken(), Token(token_type::Number{42}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Number{15}));
-            // ќтрицательные числа формируютс€ на этапе синтаксического анализа
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Char{'-'}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Number{53}));
         }
@@ -163,8 +162,7 @@ x = 1
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Char{'='}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Number{2}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Newline{}));
-            // ѕуста€ строка, состо€ща€ только из пробельных символов не мен€ет текущий отступ,
-            // поэтому следующа€ лексема Ч это Id, а не Dedent
+            // empty string does not change indents
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Id{"z"s}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Char{'='}));
             ASSERT_EQUAL(lexer.NextToken(), Token(token_type::Number{3}));

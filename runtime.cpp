@@ -19,7 +19,7 @@ namespace runtime {
     }
 
     ObjectHolder ObjectHolder::Share(Object& object) {
-        // Возвращаем не владеющий shared_ptr (его deleter ничего не делает)
+		// return shared_ptr that does not own object (its deleted does nothing)
         return ObjectHolder(std::shared_ptr<Object>(&object, [](auto* /*p*/) { /* do nothing */ }));
     }
 
@@ -47,9 +47,6 @@ namespace runtime {
 
     /* --- IsTrue() --- */
     bool IsTrue(const ObjectHolder& object) {
-        /*if (!object) {
-            return false;
-        }*/
 
         if (Bool* bool_ptr = object.TryAs<Bool>()) {
             return bool_ptr->GetValue();

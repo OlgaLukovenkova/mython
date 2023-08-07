@@ -8,60 +8,61 @@
 
 namespace runtime {
 
-    // Контекст исполнения инструкций Mython
+    // context of execution of Mython commands
     class Context {
     public:
-        // Возвращает поток вывода для команд print
+        // return output strean for print
         virtual std::ostream& GetOutputStream() = 0;
 
     protected:
         ~Context() = default;
     };
 
-    // Базовый класс для всех объектов языка Mython
+	// base class for all Mython objects
     class Object {
     public:
         virtual ~Object() = default;
-        // выводит в os своё представление в виде строки
+        // output into os its own string representation
         virtual void Print(std::ostream& os, Context& context) = 0;
     };
 
-    // Специальный класс-обёртка, предназначенный для хранения объекта в Mython-программе
+    // special class wrapper for storage object in Mython program 
+	Специальный класс-обёртка, предназначенный для хранения объекта в Mython-программе
     class ObjectHolder {
     public:
-        // Создаёт пустое значение
+        // create empty value
         ObjectHolder() = default;
 
-        // Возвращает ObjectHolder, владеющий объектом типа T
-        // Тип T - конкретный класс-наследник Object.
-        // object копируется или перемещается в кучу
+        // return ObjectHolder that owns object of type T
+        // T is derived class from Object.
+        // object is copied or moved into heap
         template <typename T>
         [[nodiscard]] static ObjectHolder Own(T&& object) {
             return ObjectHolder(std::make_shared<T>(std::forward<T>(object)));
         }
 
-        // Создаёт ObjectHolder, не владеющий объектом (аналог слабой ссылки)
+        // create ObjectHolder that does not own object of type T (weak ref)
         [[nodiscard]] static ObjectHolder Share(Object& object);
 
-        // Создаёт пустой ObjectHolder, соответствующий значению None
+        // create empty ObjectHolder which corresponds to None
         [[nodiscard]] static ObjectHolder None();
 
-        // Возвращает ссылку на Object внутри ObjectHolder.
-        // ObjectHolder должен быть непустым
+        // return ref to Object which is inside ObjectHolder.
+        // ObjectHolder must not be empty
         Object& operator*() const;
 
         Object* operator->() const;
 
         [[nodiscard]] Object* Get() const;
 
-        // Возвращает указатель на объект типа T либо nullptr, если внутри ObjectHolder не хранится
-        // объект данного типа
+        // return pointer to object of T type or nullptr, if ObjectHolder does not 
+        // contain object of T type
         template <typename T>
         [[nodiscard]] T* TryAs() const {
             return dynamic_cast<T*>(this->Get());
         }
 
-        // Возвращает true, если ObjectHolder не пуст
+        // return true, if ObjectHolder is not empty
         explicit operator bool() const;
 
     private:
@@ -71,7 +72,7 @@ namespace runtime {
         std::shared_ptr<Object> data_;
     };
 
-    // Объект-значение, хранящий значение типа T
+    // object which stores value of T type
     template <typename T>
     class ValueObject : public Object {
     public:
@@ -91,14 +92,14 @@ namespace runtime {
         T value_;
     };
 
-    // Таблица символов, связывающая имя объекта с его значением
+    // table of symbols which links objects' names and values
     using Closure = std::unordered_map<std::string, ObjectHolder>;
 
-    // Проверяет, содержится ли в object значение, приводимое к True
-    // Для отличных от нуля чисел, True и непустых строк возвращается true. В остальных случаях - false.
+    // chek if object contains value which can be transformed into True
+    // for numbers other than 0 and non-empty strings return True, in other cases return False.
     bool IsTrue(const ObjectHolder& object);
 
-    // Интерфейс для выполнения действий над объектами Mython
+    // interface for execution different actions under Mython objects
     class Executable {
     public:
         virtual ~Executable() = default;
@@ -107,12 +108,12 @@ namespace runtime {
         virtual ObjectHolder Execute(Closure& closure, Context& context) = 0;
     };
 
-    // Строковое значение
+    // String value
     using String = ValueObject<std::string>;
-    // Числовое значениеa
+    // Number value
     using Number = ValueObject<int>;
 
-    // Логическое значение
+    // Logical value
     class Bool : public ValueObject<bool> {
     public:
         using ValueObject<bool>::ValueObject;
@@ -120,17 +121,16 @@ namespace runtime {
         void Print(std::ostream& os, Context& context) override;
     };
 
-    // Метод класса
+    // Method of class
     struct Method {
-        // Имя метода
         std::string name;
-        // Имена формальных параметров метода
+        
         std::vector<std::string> formal_params;
-        // Тело метода
+       
         std::unique_ptr<Executable> body;
     };
 
-    // Класс
+
     class Class : public Object {
     public:
         // Создаёт класс с именем name и набором методов methods, унаследованный от класса parent
@@ -151,32 +151,29 @@ namespace runtime {
         const Class* parent_;
     };
 
-    // Экземпляр класса
     class ClassInstance : public Object {
     public:
         explicit ClassInstance(const Class& cls);
 
         /*
-         * Если у объекта есть метод __str__, выводит в os результат, возвращённый этим методом.
-         * В противном случае в os выводится адрес объекта.
+         * If object has __str__ method then output its result into os 
+         * Else output object's adress
          */
         void Print(std::ostream& os, Context& context) override;
 
         /*
-         * Вызывает у объекта метод method, передавая ему actual_args параметров.
-         * Параметр context задаёт контекст для выполнения метода.
-         * Если ни сам класс, ни его родители не содержат метод method, метод выбрасывает исключение
-         * runtime_error
+         * Call object's method
+         * If class or its base classes do not have such method throw exception runtime_error
          */
         ObjectHolder Call(const std::string& method, const std::vector<ObjectHolder>& actual_args,
             Context& context);
 
-        // Возвращает true, если объект имеет метод method, принимающий argument_count параметров
+        // return true if object has method with argument_count parameters
         [[nodiscard]] bool HasMethod(const std::string& method, size_t argument_count) const;
 
-        // Возвращает ссылку на Closure, содержащий поля объекта
+        // return ref to Closure which contains attributes of object
         [[nodiscard]] Closure& Fields();
-        // Возвращает константную ссылку на Closure, содержащую поля объекта
+        // return const ref to Closure which contains attributes of object
         [[nodiscard]] const Closure& Fields() const;
     private:
         Closure fields_;
@@ -184,35 +181,29 @@ namespace runtime {
     };
 
     /*
-     * Возвращает true, если lhs и rhs содержат одинаковые числа, строки или значения типа Bool.
-     * Если lhs - объект с методом __eq__, функция возвращает результат вызова lhs.__eq__(rhs),
-     * приведённый к типу Bool. Если lhs и rhs имеют значение None, функция возвращает true.
-     * В остальных случаях функция выбрасывает исключение runtime_error.
-     *
-     * Параметр context задаёт контекст для выполнения метода __eq__
+     * return true if lhs and rhs contain equal numbers, strings or Bool values.
+     * If lhs is object and it has method __eq__ then function returns result of lhs.__eq__(rhs)
+     * which is transformed into Bool type. If lhs and rhs are both None function returns true.
+     * Else throws exception runtime_error.
      */
     bool Equal(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
 
     /*
-     * Если lhs и rhs - числа, строки или значения bool, функция возвращает результат их сравнения
-     * оператором <.
-     * Если lhs - объект с методом __lt__, возвращает результат вызова lhs.__lt__(rhs),
-     * приведённый к типу bool. В остальных случаях функция выбрасывает исключение runtime_error.
-     *
-     * Параметр context задаёт контекст для выполнения метода __lt__
+     * If lhs and rhs are numbers, strings or Bool values, return result of their comparison by operator <.
+     * If lhs is object and it has method __lt__ then function returns result of  lhs.__lt__(rhs),
+     * which is transformed into Bool type. Else throws exception runtime_error.
      */
     bool Less(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
-    // Возвращает значение, противоположное Equal(lhs, rhs, context)
+    // return value opposite to Equal(lhs, rhs, context)
     bool NotEqual(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
-    // Возвращает значение lhs>rhs, используя функции Equal и Less
+    // return lhs>rhs using Equal and Less
     bool Greater(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
-    // Возвращает значение lhs<=rhs, используя функции Equal и Less
+    // return lhs<=rhs using Equal and Less
     bool LessOrEqual(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
-    // Возвращает значение, противоположное Less(lhs, rhs, context)
+    // return value opposite to Less(lhs, rhs, context)
     bool GreaterOrEqual(const ObjectHolder& lhs, const ObjectHolder& rhs, Context& context);
 
-    // Контекст-заглушка, применяется в тестах.
-    // В этом контексте весь вывод перенаправляется в строковый поток вывода output
+    // Context for tests
     struct DummyContext : Context {
         std::ostream& GetOutputStream() override {
             return output;
@@ -221,7 +212,7 @@ namespace runtime {
         std::ostringstream output;
     };
 
-    // Простой контекст, в нём вывод происходит в поток output, переданный в конструктор
+    // Simple context
     class SimpleContext : public runtime::Context {
     public:
         explicit SimpleContext(std::ostream& output)

@@ -87,13 +87,13 @@ namespace parse {
     }
 
     Token Lexer::NextToken() {
-        // комментарий
+        // comment
         if (in_.peek() == '#') {
             std::string comment;
             getline(in_, comment);
             in_.putback('\n');
         }
-        // новая строка
+        // new line
         if (in_.peek() == '\n') {
             in_.get();
             ReadSpaces();
@@ -104,7 +104,7 @@ namespace parse {
                 return NextToken();
             }
         }
-        // отступы
+        // indents
         if (current_token_ != token_type::Newline() ||
             current_token_ != token_type::Indent() ||
             current_token_ != token_type::Dedent())
@@ -116,7 +116,7 @@ namespace parse {
             str_indent_ -= 2;
             return current_token_ = token_type::Dedent();
         }
-        // конец
+        // end
         if (!in_) {
             if (current_token_ != token_type::Newline() &&
                 current_token_ != token_type::Eof() &&
@@ -125,29 +125,29 @@ namespace parse {
             }
             return current_token_ = token_type::Eof();
         }
-        // число
+        // number
         if (std::isdigit(in_.peek())) {
             return current_token_ = ReadNumber();
         }
-        // строка
+        // line
         if (in_.peek() == '\'' || in_.peek() == '\"') {
             char quot = in_.get();
             return current_token_ = ReadString(quot);
         }
-        // идентификатор, ключевое слово
+        // id, key word
         if (in_.peek() == '_' || std::isalpha(in_.peek())) {
             return current_token_ = ReadIdentifier();
         }
-        //оператор сравнения, присваивания
+        // comparison or assignment
         if ("!=<>"s.find(in_.peek()) != std::string::npos) {
             return current_token_ = ReadComparison();
         }
-        // операторы +-*/:().,
+        // +-*/:().,
         if ("+-*/:().,"s.find(in_.peek()) != std::string::npos) {
             return current_token_ = token_type::Char{ static_cast<char>(in_.get()) };
         }
 
-        // просто пробелы в строке
+        // spaces in line
         while (in_.peek() == ' ') {
             in_.get();
         }
@@ -174,7 +174,7 @@ namespace parse {
                 throw LexerError("String parsing error"s);
             }
 
-            if (in_.peek() == '\\') { // для экранируемых последовательностей
+            if (in_.peek() == '\\') { // for escapable sequences
                 in_.get();
 
                 switch (static_cast<char>(in_.get())) {
